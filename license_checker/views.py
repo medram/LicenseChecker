@@ -33,8 +33,8 @@ def check_license(request):
                 license.save()
 
             except License.DoesNotExist:
-                # create/register a new license
-                if data:  # envato license data exists
+                # create/register a new license (if envato license data exists)
+                if valid:
                     license = License.objects.create(
                         license_code=license_code,
                         license_type=license_type,
@@ -42,6 +42,7 @@ def check_license(request):
                         amount=float(data.get('amount'))
                     )
 
+            # verify the license code.
             if valid and license.status == license.STATUS.ACTIVE:
                 result = {
                     'status': license.get_status_display().upper(),
