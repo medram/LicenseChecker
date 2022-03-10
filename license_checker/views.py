@@ -43,13 +43,22 @@ def check_license(request):
                     )
 
             # verify the license code.
-            if valid and license.status == license.STATUS.ACTIVE:
-                result = {
-                    'status': license.get_status_display().upper(),
-                    'message': "This license code is valid",
-                    'hash': os.urandom(20).hex()
-                }
-                return JsonResponse(result)
+            if valid:
+                if license.status == license.STATUS.ACTIVE:
+                    result = {
+                        'status': license.get_status_display().upper(),
+                        'message': "This license code is valid",
+                        'hash': os.urandom(20).hex()
+                    }
+                    return JsonResponse(result)
+
+                if license.status == License.STATUS.BANNED:
+                    result = {
+                        'status': License.STATUS.BANNED.name,
+                        'message': "This license code is banned!",
+                        'hash': os.urandom(20).hex()
+                    }
+                    return JsonResponse(result)
 
             result = {
                 'status': License.STATUS.INACTIVE.name,
