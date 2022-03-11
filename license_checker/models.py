@@ -29,3 +29,16 @@ class License(models.Model):
 
     def __str__(self):
         return self.license_code
+
+
+class Domain(models.Model):
+    license = models.ForeignKey(
+        'License', on_delete=models.CASCADE, related_name='domains')
+    host = models.CharField(max_length=64)
+    checks = models.IntegerField(default=0)
+
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.host
