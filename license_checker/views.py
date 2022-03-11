@@ -55,7 +55,7 @@ def check_license(request):
                 if license.status == License.STATUS.BANNED:
                     result = {
                         'status': License.STATUS.BANNED.name,
-                        'message': "This license code is banned!",
+                        'message': "Invalid License, probably has been blacklisted!",
                         'hash': os.urandom(20).hex()
                     }
                     return JsonResponse(result)
