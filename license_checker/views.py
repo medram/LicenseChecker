@@ -1,19 +1,23 @@
 import os
+
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .common import verify_envato_license_code
-from .models import License, Domain
+from .models import License, Domain, App
+from .decorators import api_key_required
 
 ENVATO_TOKEN = os.getenv('ENVATO_TOKEN', None)
 
 
 @csrf_exempt
+@api_key_required
 def check_license(request):
 
     if request.method == 'POST':
         license_code = request.POST.get('license_code')
         host = request.POST.get('host')
+        app = request._app
 
         if license_code and ENVATO_TOKEN:
             # Get the license from database && update it (sync with Envato).
@@ -49,6 +53,7 @@ def check_license(request):
                         license_code=license_code,
                         license_type=license_type,
                         checks=1,
+                        app=app,
                         amount=float(data.get('amount'))
                     )
                     # create a domain as well.
