@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .common import verify_envato_license_code
-from .models import License
+from .models import License, Domain
 
 ENVATO_TOKEN = os.getenv('ENVATO_TOKEN', None)
 
@@ -32,6 +32,16 @@ def check_license(request):
                 license.amount = float(data.get('amount'))
                 license.save()
 
+                # add a domain if not exists
+                try:
+                    domain = Domain.objects.get(host=host)
+                    domain.checks += 1
+                    domain.save()
+
+                except Domain.DoesNotExist:
+                    # add a new one.
+                    Domain.objects.create(host=host, checks=1, license=license)
+
             except License.DoesNotExist:
                 # create/register a new license (if envato license data exists)
                 if valid:
@@ -41,6 +51,8 @@ def check_license(request):
                         checks=1,
                         amount=float(data.get('amount'))
                     )
+                    # create a domain as well.
+                    Domain.objects.create(host=host, checks=1, license=license)
 
             # verify the license code.
             if valid:
