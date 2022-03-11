@@ -1,4 +1,6 @@
 import random
+import os
+
 import requests
 
 
@@ -42,3 +44,7 @@ def verify_envato_license_code(code, envato_token):
             print(e)
 
     return data, False
+
+
+def generate_api_key():
+    return os.urandom(20).hex()

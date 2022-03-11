@@ -1,4 +1,5 @@
 from django.db import models
+from .common import generate_api_key
 
 
 class License(models.Model):
@@ -18,6 +19,7 @@ class License(models.Model):
     checks = models.IntegerField(default=0, blank=True)
 
     amount = models.FloatField(default=0)
+    app = models.ForeignKey('App', on_delete=models.CASCADE, related_name='licenses')
     # sold_at = models.DateTimeField()
     # supported_until = models.DateTimeField()
 
@@ -42,3 +44,14 @@ class Domain(models.Model):
 
     def __str__(self):
         return self.host
+
+
+class App(models.Model):
+    api_key = models.CharField(max_length=256, default=generate_api_key)
+    app_name = models.CharField(max_length=40)
+
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.app_name
