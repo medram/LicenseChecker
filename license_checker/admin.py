@@ -5,11 +5,16 @@ from .models import License, Domain, App
 @admin.register(License)
 class LicenseAdmin(admin.ModelAdmin):
     list_display = ('license_code', 'status', 'license_type',
-                    'checks', 'amount', 'updated', 'created')
+                    'checks', 'amount', 'domains', 'updated', 'created')
     search_fields = ('license_code',)
-    list_filter = ('status', 'license_type', 'app__app_name', 'created', 'updated')
+    list_filter = ('status', 'license_type',
+                   'app__app_name', 'created', 'updated')
     readonly_fields = ('checks',)
     autocomplete_fields = ('app',)
+
+    @admin.display
+    def domains(self, obj):
+        return obj.domains.count()
 
 
 @admin.register(Domain)
@@ -22,7 +27,20 @@ class DomainAdmin(admin.ModelAdmin):
 
 @admin.register(App)
 class AppAdmin(admin.ModelAdmin):
-    list_display = ('app_name', 'api_key', 'created')
+    list_display = ('app_name', 'api_key', 'licenses',
+                    'domains', 'checks', 'created')
     fields = ('app_name', 'api_key')
     search_fields = ('app_name', 'api_key')
     list_filter = ('created',)
+
+    @admin.display
+    def licenses(self, obj):
+        return obj.licenses.count()
+
+    @admin.display
+    def domains(self, obj):
+        return sum(n for n in (license.domains.count() for license in obj.licenses.all()))
+
+    @admin.display(description='Total checks')
+    def checks(self, obj):
+        return sum(license.checks for license in obj.licenses.all())
