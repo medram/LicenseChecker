@@ -85,3 +85,9 @@ def check_license(request):
             return JsonResponse(result)
 
     return JsonResponse({}, status=403)
+
+
+def is_up(request):
+    return JsonResponse({
+        'is_up': True
+    })
