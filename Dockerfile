@@ -26,6 +26,10 @@ COPY --chown=${USER}:${USER} . .
 # applying migrations
 RUN python3 manage.py migrate && python3 manage.py collectstatic --no-input --skip-checks
 
+# Fixing files & folders permissions
+RUN chown ${USER}:${USER} /app/db.sqlite3 \
+	&& chmod 664 /app/db.sqlite3
+
 VOLUME ["/app"]
 
 CMD gunicorn --bind 0.0.0.0:80 -w ${WORKERS} app.wsgi
