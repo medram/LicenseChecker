@@ -7,8 +7,8 @@ ENV PORT=80
 
 WORKDIR /app
 
-#RUN apt-get update && apt-get install -y gunicorn \
-#	&& apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl \
+	&& apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # create a django user & switch to it.
 RUN useradd -m ${USER} && chown ${USER}:${USER} /app
