@@ -27,9 +27,9 @@ class DomainAdmin(admin.ModelAdmin):
 
 @admin.register(App)
 class AppAdmin(admin.ModelAdmin):
-    list_display = ('app_name', 'api_key', 'licenses',
+    list_display = ('app_name', 'envato_app_id', 'api_key', 'earnings', 'licenses',
                     'domains', 'checks', 'created')
-    fields = ('app_name', 'api_key')
+    fields = ('app_name', 'envato_app_id')
     search_fields = ('app_name', 'api_key')
     list_filter = ('created',)
 
@@ -44,3 +44,7 @@ class AppAdmin(admin.ModelAdmin):
     @admin.display(description='Total checks')
     def checks(self, obj):
         return sum(license.checks for license in obj.licenses.all())
+
+    @admin.display(description='earnings')
+    def earnings(self, obj=None):
+        return "$%.2f" % sum(license.amount for license in obj.licenses.all())
