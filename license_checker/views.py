@@ -19,10 +19,9 @@ def check_license(request):
         host = request.POST.get('host')
         app = request._app
 
-        if license_code and ENVATO_TOKEN:
+        if license_code:
             # Get the license from database && update it (sync with Envato).
-            data, valid = verify_envato_license_code(
-                license_code, ENVATO_TOKEN)
+            data, valid = app.verify_envato_license_code(license_code)
 
             license_type = License.TYPES.REGULAR_LICENSE if str(data.get(
                 'license')).lower() == 'regular license' else License.TYPES.EXTENDED_LICENSE
@@ -30,21 +29,23 @@ def check_license(request):
             try:
                 license = License.objects.get(license_code=license_code)
                 # update license (sync with Envato)
-                license.status = License.STATUS.INACTIVE if not valid else license.status
-                license.checks += 1
-                license.license_type = license_type
-                license.amount = float(data.get('amount'))
-                license.save()
+                if license.app == app:
+                    license.status = License.STATUS.INACTIVE if not valid else license.status
+                    license.checks += 1
+                    license.license_type = license_type
+                    license.amount = float(data.get('amount'))
+                    license.save()
 
-                # add a domain if not exists
-                try:
-                    domain = Domain.objects.get(host=host)
-                    domain.checks += 1
-                    domain.save()
+                    # add a domain if not exists
+                    try:
+                        domain = Domain.objects.get(host=host)
+                        domain.checks += 1
+                        domain.save()
 
-                except Domain.DoesNotExist:
-                    # add a new one.
-                    Domain.objects.create(host=host, checks=1, license=license)
+                    except Domain.DoesNotExist:
+                        # add a new one.
+                        Domain.objects.create(
+                            host=host, checks=1, license=license)
 
             except License.DoesNotExist:
                 # create/register a new license (if envato license data exists)

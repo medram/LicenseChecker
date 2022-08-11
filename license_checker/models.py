@@ -1,5 +1,11 @@
+import os
+
 from django.db import models
-from .common import generate_api_key
+from django.utils.translation import gettext_lazy as _
+
+from .common import generate_api_key, verify_envato_license_code
+
+ENVATO_TOKEN = os.getenv('ENVATO_TOKEN', None)
 
 
 class License(models.Model):
@@ -19,7 +25,8 @@ class License(models.Model):
     checks = models.IntegerField(default=0, blank=True)
 
     amount = models.FloatField(default=0)
-    app = models.ForeignKey('App', on_delete=models.CASCADE, related_name='licenses')
+    app = models.ForeignKey(
+        'App', on_delete=models.CASCADE, related_name='licenses')
     # sold_at = models.DateTimeField()
     # supported_until = models.DateTimeField()
 
@@ -49,9 +56,20 @@ class Domain(models.Model):
 class App(models.Model):
     api_key = models.CharField(max_length=256, default=generate_api_key)
     app_name = models.CharField(max_length=40)
+    envato_app_id = models.CharField(_('Envato App ID'), max_length=40)
 
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+
+    def verify_envato_license_code(self, code):
+        data, valid = verify_envato_license_code(code, ENVATO_TOKEN)
+        valid = False if self.envato_app_id != str(
+            data['item']['id']) else valid
+
+        print(valid)
+        print(data)
+
+        return data, valid
 
     def __str__(self):
         return self.app_name
