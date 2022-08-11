@@ -3,8 +3,7 @@ FROM python:3.8-slim
 ENV WORKERS=3
 ENV USER=django
 ENV PATH=${PATH}:/home/${USER}/.local/bin
-
-EXPOSE 80
+ENV PORT=80
 
 WORKDIR /app
 
@@ -32,5 +31,8 @@ RUN chown ${USER}:${USER} /app/db.sqlite3 \
 
 VOLUME ["/app"]
 
-CMD gunicorn --bind 0.0.0.0:80 -w ${WORKERS} app.wsgi
-#CMD python3 manage.py runserver 0.0.0.0:80
+EXPOSE ${PORT}
+
+HEALTHCHECK --interval=15s --timeout=14s --start-period=5s CMD curl -fsSLI http://127.0.0.1:${PORT}/admin/login/ | grep -q "200 OK" || false
+
+CMD gunicorn --bind 0.0.0.0:${PORT} -w ${WORKERS} app.wsgi
