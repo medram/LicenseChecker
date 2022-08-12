@@ -79,7 +79,7 @@ class App(models.Model):
         return data, valid
 
     def is_valid_license(self, license, valid):
-        if (valid or license.force) and license.status == License.STATUS.ACTIVE:
+        if license.app == self and (valid or license.force) and license.status == License.STATUS.ACTIVE:
             return True
         return False
 
