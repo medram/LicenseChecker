@@ -63,11 +63,10 @@ class App(models.Model):
 
     def verify_envato_license_code(self, code):
         data, valid = verify_envato_license_code(code, ENVATO_TOKEN)
-        valid = False if self.envato_app_id != str(
-            data['item']['id']) else valid
 
-        print(valid)
-        print(data)
+        if valid:
+            valid = False if self.envato_app_id != str(
+                data['item']['id']) else valid
 
         return data, valid
 
