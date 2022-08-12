@@ -27,14 +27,22 @@ class License(models.Model):
     amount = models.FloatField(default=0)
     app = models.ForeignKey(
         'App', on_delete=models.CASCADE, related_name='licenses')
-    # sold_at = models.DateTimeField()
-    # supported_until = models.DateTimeField()
+
+    force = models.BooleanField(_('Force Override!'), default=False,
+                                blank=True, help_text=_('Override Envato license info (license type, status & amount), required for custom licenses!'))
 
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ('-created',)
+
+    @classmethod
+    def get_license(cls, license_code):
+        try:
+            return cls.objects.get(license_code=license_code)
+        except cls.DoesNotExist:
+            return None
 
     def __str__(self):
         return self.license_code
@@ -69,6 +77,23 @@ class App(models.Model):
                 data['item']['id']) else valid
 
         return data, valid
+
+    def is_valid_license(self, license, valid):
+        if (valid or license.force) and license.status == License.STATUS.ACTIVE:
+            return True
+        return False
+
+    def update_license(self, license, data, valid=False):
+        if license.app == self:
+            if not license.force:
+                license_type = License.TYPES.REGULAR_LICENSE if str(data.get(
+                    'license')).lower() == 'regular license' else License.TYPES.EXTENDED_LICENSE
+
+                license.status = License.STATUS.ACTIVE if valid else License.STATUS.INACTIVE
+                license.license_type = license_type if valid else License.TYPES.REGULAR_LICENSE
+                license.amount = float(data.get('amount', 0))
+
+            license.save()
 
     def __str__(self):
         return self.app_name
