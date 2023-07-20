@@ -22,6 +22,9 @@ RUN pip3 install -r requirements.txt --no-cache-dir
 # copy all django files.
 COPY --chown=${USER}:${USER} . .
 
+# Copy the .env
+COPY --chown=${USER}:${USER} .env.example .env
+
 # applying migrations
 RUN python3 manage.py migrate && python3 manage.py collectstatic --no-input --skip-checks
 

@@ -63,6 +63,7 @@ def check_license(request):
             if app.is_valid_license(license, valid):
                 result = {
                     'status': license.get_status_display().upper(),
+                    'license_type': license.get_license_type_display().upper(),
                     'message': "This license code is valid",
                     'hash': os.urandom(20).hex()
                 }
@@ -71,6 +72,7 @@ def check_license(request):
             if license.status == License.STATUS.BANNED:
                 result = {
                     'status': License.STATUS.BANNED.name,
+                    'license_type': license.get_license_type_display().upper(),
                     'message': "Invalid License, probably has been blacklisted!, for more info please contact the support.",
                     'hash': os.urandom(20).hex()
                 }
