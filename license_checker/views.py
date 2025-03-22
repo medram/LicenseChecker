@@ -8,18 +8,15 @@ from django.views.decorators.csrf import csrf_exempt
 from .decorators import api_key_required
 from .models import App, Domain, License
 
-ENVATO_TOKEN = os.getenv("ENVATO_TOKEN", None)
+ENVATO_TOKEN: str = os.getenv("ENVATO_TOKEN", "")
 
 
 @csrf_exempt
 @api_key_required
 def check_license(request: HttpRequest):
-    print(f"in view!")
     result: dict[str, Any] = {}
-    print(f"request headers: {request.headers}")
+
     if request.method == "POST":
-        print(f"request.POST: {request.POST}")
-        print(f"request body: {request.body}")
 
         # Try to get from POST data first
         license_code: str = request.POST.get("license_code", "")
@@ -38,8 +35,6 @@ def check_license(request: HttpRequest):
 
         license = License.get_license(license_code)
         data, valid = app.verify_envato_license_code(license_code)
-
-        print(f"license_code: {license_code}, host: {host}, valid: {valid}")
 
         # Check DB license exists or not?
         if valid and not license:

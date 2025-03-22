@@ -6,3 +6,4 @@ static/
 *.pyc
 .env
 db.sqlite3
+docker-compose.dev.yml

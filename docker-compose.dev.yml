@@ -1,0 +1,16 @@
+services:
+  license:
+    image: mrmed/license_checker:latest
+    command: python manage.py runserver 0.0.0.0:80
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DEBUG: 1
+      ALLOWED_HOSTS: "*"
+      CSRF_TRUSTED_ORIGINS: "http://*.mr4web.com,https://*.mr4web.com"
+      ENVATO_TOKEN: 6ok5fzI9CnmwX9lxUSMhZC7SdI3DVynX
+    volumes:
+      - ./:/app
+    ports:
+      - "8000:80"
