@@ -1,22 +1,24 @@
 import os
+from typing import Any
 
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .common import verify_envato_license_code
-from .models import License, Domain, App
-from .decorators import api_key_required
 
-ENVATO_TOKEN = os.getenv('ENVATO_TOKEN', None)
+from .decorators import api_key_required
+from .models import App, Domain, License
+
+ENVATO_TOKEN = os.getenv("ENVATO_TOKEN", None)
 
 
 @csrf_exempt
 @api_key_required
 def check_license(request):
 
-    if request.method == 'POST':
-        license_code = request.POST.get('license_code')
-        host = request.POST.get('host')
+    result: dict[str, Any] = {}
+
+    if request.method == "POST":
+        license_code = request.POST.get("license_code")
+        host = request.POST.get("host")
         app = request._app
 
         license = License.get_license(license_code)
@@ -30,7 +32,7 @@ def check_license(request):
                 license_type=License.TYPES.REGULAR_LICENSE,
                 checks=0,
                 app=app,
-                amount=float(0)
+                amount=float(0),
             )
 
         # Update license (force=False)
@@ -51,8 +53,7 @@ def check_license(request):
 
             except Domain.DoesNotExist:
                 # add a new one.
-                domain = Domain.objects.create(
-                    host=host, checks=1, license=license)
+                domain = Domain.objects.create(host=host, checks=1, license=license)
                 license.domains.add(domain)
 
             # Use DB license
@@ -62,33 +63,31 @@ def check_license(request):
             # verify the license code.
             if app.is_valid_license(license, valid):
                 result = {
-                    'status': license.get_status_display().upper(),
-                    'license_type': license.get_license_type_display().upper(),
-                    'message': "This license code is valid",
-                    'hash': os.urandom(20).hex()
+                    "status": license.get_status_display().upper(),
+                    "license_type": license.get_license_type_display().upper(),
+                    "message": "This license code is valid",
+                    "hash": os.urandom(20).hex(),
                 }
                 return JsonResponse(result)
 
             if license.status == License.STATUS.BANNED:
                 result = {
-                    'status': License.STATUS.BANNED.name,
-                    'license_type': license.get_license_type_display().upper(),
-                    'message': "Invalid License, probably has been blacklisted!, for more info please contact the support.",
-                    'hash': os.urandom(20).hex()
+                    "status": License.STATUS.BANNED.name,
+                    "license_type": license.get_license_type_display().upper(),
+                    "message": "Invalid License, probably has been blacklisted!, for more info please contact the support.",
+                    "hash": os.urandom(20).hex(),
                 }
                 return JsonResponse(result)
 
         # Default response
         result = {
-            'status': License.STATUS.INACTIVE.name,
-            'message': "Invalid License, please ensure you've inserted a correct license code, or contact the support for help.",
-            'hash': os.urandom(20).hex()
+            "status": License.STATUS.INACTIVE.name,
+            "message": "Invalid License, please ensure you've inserted a correct license code, or contact the support for help.",
+            "hash": os.urandom(20).hex(),
         }
 
     return JsonResponse(result, status=403)
 
 
 def is_up(request):
-    return JsonResponse({
-        'is_up': True
-    })
+    return JsonResponse({"is_up": True})
