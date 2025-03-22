@@ -1,7 +1,8 @@
+import json
 import os
-from typing import Any
+from typing import Any, cast
 
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .decorators import api_key_required
@@ -12,17 +13,33 @@ ENVATO_TOKEN = os.getenv("ENVATO_TOKEN", None)
 
 @csrf_exempt
 @api_key_required
-def check_license(request):
-
+def check_license(request: HttpRequest):
+    print(f"in view!")
     result: dict[str, Any] = {}
-
+    print(f"request headers: {request.headers}")
     if request.method == "POST":
-        license_code = request.POST.get("license_code")
-        host = request.POST.get("host")
-        app = request._app
+        print(f"request.POST: {request.POST}")
+        print(f"request body: {request.body}")
+
+        # Try to get from POST data first
+        license_code: str = request.POST.get("license_code", "")
+        host: str = request.POST.get("host", "")
+
+        # If empty, try to get from JSON body
+        if not license_code or not host:
+            try:
+                json_data = json.loads(request.body.decode("utf-8"))
+                license_code = license_code or json_data.get("license_code", "")
+                host = host or json_data.get("host", "")
+            except json.JSONDecodeError:
+                pass
+
+        app = cast(App, request._app)  # type: ignore
 
         license = License.get_license(license_code)
         data, valid = app.verify_envato_license_code(license_code)
+
+        print(f"license_code: {license_code}, host: {host}, valid: {valid}")
 
         # Check DB license exists or not?
         if valid and not license:
@@ -54,7 +71,7 @@ def check_license(request):
             except Domain.DoesNotExist:
                 # add a new one.
                 domain = Domain.objects.create(host=host, checks=1, license=license)
-                license.domains.add(domain)
+                license.domains.add(domain)  # type: ignore
 
             # Use DB license
             # print('> License status:', license.get_status_display())
@@ -63,8 +80,8 @@ def check_license(request):
             # verify the license code.
             if app.is_valid_license(license, valid):
                 result = {
-                    "status": license.get_status_display().upper(),
-                    "license_type": license.get_license_type_display().upper(),
+                    "status": license.get_status_display().upper(),  # type: ignore
+                    "license_type": license.get_license_type_display().upper(),  # type: ignore
                     "message": "This license code is valid",
                     "hash": os.urandom(20).hex(),
                 }
@@ -73,7 +90,7 @@ def check_license(request):
             if license.status == License.STATUS.BANNED:
                 result = {
                     "status": License.STATUS.BANNED.name,
-                    "license_type": license.get_license_type_display().upper(),
+                    "license_type": license.get_license_type_display().upper(),  # type: ignore
                     "message": "Invalid License, probably has been blacklisted!, for more info please contact the support.",
                     "hash": os.urandom(20).hex(),
                 }
